@@ -1,0 +1,59 @@
+@import url("https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&display=swap");
+
+@import "tailwindcss";
+
+@theme {
+  --font-logo: "Bebas Neue", sans-serif;
+  --font-title: "CodeNext", sans-serif;
+  --color-sym_gray-50: #e4e4e4;
+  --color-sym_gray-100: #cacac9;
+  --color-sym_gray-200: #afafaf;
+  --color-sym_gray-300: #959594;
+  --color-sym_gray-400: #7a7a79;
+  --color-sym_gray-500: #60605e;
+  --color-sym_gray-600: #454544;
+  --color-sym_gray-700: #2b2b29;
+  --color-sym_gray-800: #10100e;
+}
+
+@font-face {
+  font-family: CodeNext;
+  src: url("/src/assets/fonts/CodeNext-SemiBold.otf") format("otf");
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: VVDS-Fifties;
+  src: url("/src/assets/fonts/VVDS-Fifties-Cond-Bold.otf") format("otf");
+  font-weight: regular;
+  font-style: normal;
+}
+
+html {
+  font-family: "Rubik", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  scroll-behavior: smooth;
+  box-sizing: border-box;
+}
+
+.animated-background {
+  background-size: 400%;
+
+  -webkit-animation: animation 10s ease infinite;
+  -moz-animation: animation 10s ease infinite;
+  animation: animation 10s ease infinite;
+}
+
+@keyframes animation {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
