@@ -15,7 +15,6 @@ export const VideoDisplayHorizontal = ({ webM }: VideoDisplayProps): ReactElemen
   const videoRef = useRef<HTMLVideoElement | null>(null)
 
   const handleSlider = (direction: number) => {
-    console.log('trigger')
     setCurrentVideo((prev) => {
       if (direction === 1) {
         if (prev === 0) return webM.length - 1

@@ -5,7 +5,7 @@ const Landing = lazy(async () => await import('./routes/Landing'))
 
 function Layout() {
     return (
-        <div>
+        <div className=' overflow-hidden'>
             <Suspense fallback={<p>Loading...</p>}>
                 <Routes>
                     <Route path='/' element={<Landing />} />
