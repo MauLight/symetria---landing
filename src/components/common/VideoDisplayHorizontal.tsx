@@ -38,7 +38,7 @@ export const VideoDisplayHorizontal = ({ webM }: VideoDisplayProps): ReactElemen
   }, [])
 
   return (
-    <div className="relative flex justify-center items-center w-screen h-screen">
+    <div className="relative max-sm:h-[400px] flex justify-center items-center w-screen h-screen">
       <div className="absolute top-0 left-0 bg-gradient-to-t from -[#10100e] to-transparent w-full h-full"></div>
       <motion.video
         ref={videoRef}

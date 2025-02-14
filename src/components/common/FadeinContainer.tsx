@@ -18,7 +18,7 @@ export default function FadeinContainer({ children }: { children: ReactNode }): 
 
     return (
         <motion.ul
-            className='w-full flex flex-wrap gap-12 justify-center items-center'
+            className='w-full flex max-sm:flex-col flex-wrap gap-12 justify-center items-center'
             initial='hidden'
             whileInView='visible'
             viewport={{ amount: 0.4 }}
