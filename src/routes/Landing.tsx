@@ -26,6 +26,19 @@ const childVariants = {
     }
 }
 
+const recaptchaSiteKey = import.meta.env.VITE_GRECAPTCHA
+
+interface GoogleReCaptcha {
+    execute: (siteKey: string, options: { action: string }) => Promise<string>
+    ready: (callback: () => void) => void
+}
+
+declare global {
+    interface Window {
+        grecaptcha: GoogleReCaptcha
+    }
+}
+
 function Symetria() {
 
     return (
@@ -378,90 +391,159 @@ import { useContext } from "react"
 import useMeasure from 'react-use-measure'
 import axios from 'axios'
 import validator from 'validator'
+import ErrorComponent from '@/components/common/ErrorComponent'
 
 let transition = { type: "ease", ease: "easeInOut", duration: 1 }
 
 function ContactForm({ parent }: { parent: any }) {
 
     const [email, setEmail] = useState<string>('')
+    const [honeyPot, setHoneyPot] = useState<string>('')
     const [status, setStatus] = useState("idle")
     const [ref, bounds] = useMeasure()
 
-    async function handleSubmitContact() {
-        console.log(email)
+    const [{ hasError }, setApiState] = useState<{ isLoading: boolean, hasError: boolean, fulfilled: boolean }>({
+        isLoading: false,
+        hasError: false,
+        fulfilled: false
+    })
+
+    async function handleSubmitContact(token: string) {
+
         if (!validator.isEmail(email)) {
             return
         }
 
+        if (honeyPot.length > 0) {
+            return
+        }
+
+        setApiState(prev => ({
+            ...prev,
+            isLoading: true
+        }))
+
         try {
-            const { data } = await axios.post('https://symetria-landing.netlify.app/.netlify/functions/send-contact', { email })
+            const { data } = await axios.post('https://symetria-landing.netlify.app/.netlify/functions/send-contact', { email, token })
             if (data.message) {
+
+                setApiState(prev => ({
+                    ...prev,
+                    isLoading: false
+                }))
+
                 setStatus("success")
+            } else {
+
+                setApiState(prev => ({
+                    ...prev,
+                    hasError: true
+                }))
             }
+
         } catch (error) {
+
+            setApiState(prev => ({
+                ...prev,
+                hasError: true
+            }))
+
             console.log(error)
+        }
+    }
+
+    async function handleSubmitRecaptcha(): Promise<void> {
+        if (!window.grecaptcha) {
+            console.error('reCAPTCHA not available')
+            return
+        }
+
+        try {
+            const token = await window.grecaptcha.execute(recaptchaSiteKey, { action: 'contact_form' })
+            await handleSubmitContact(token)
+        } catch (error) {
+            console.error(error)
         }
     }
 
     return (
         <MotionConfig transition={transition}>
-            <div className="relative w-full h-[700px] flex flex-col items-start border-t border-zinc-600 pt-44 px-5">
+            <div className="relative w-full h-[700px] flex flex-col items-start pt-44 px-5">
                 <div className="mx-auto w-full max-w-md z-20">
                     <div className="rounded-2xl border border-zinc-700 bg-zinc-900 overflow-hidden">
-                        <div className="px-8 pt-8">
-                            <p className="text-lg text-white">{status === "idle" || status === "saving" ? "Let's talk" : 'Thank you.'}</p>
-                        </div>
+                        {
+                            hasError && (
+                                <ErrorComponent theme='dark' />
+                            )
+                        }
+                        {
+                            !hasError && (
+                                <>
+                                    <div className="px-8 pt-8">
+                                        <p className="text-lg text-white">{status === "idle" || status === "saving" ? "Let's talk" : 'Thank you.'}</p>
+                                    </div>
 
-                        <motion.div
-                            animate={{ height: bounds.height > 0 ? bounds.height : '' }}
-                            transition={{ type: 'spring', bounce: 0.1, duration: 0.8 }}
-                        >
-                            <div ref={ref}>
-                                <AnimatePresence mode='popLayout'>
-                                    {status === "idle" || status === "saving" ? (
+                                    <motion.div
+                                        animate={{ height: bounds.height > 0 ? bounds.height : '' }}
+                                        transition={{ type: 'spring', bounce: 0.1, duration: 0.8 }}
+                                    >
+                                        <div ref={ref}>
+                                            <AnimatePresence mode='popLayout'>
+                                                {status === "idle" || status === "saving" ? (
 
-                                        <motion.div
-                                            key={1}
-                                            exit={{ opacity: 0 }}
-                                            transition={{ ...transition, duration: 0.3 }}
-                                            className='p-8'>
-                                            <Form
-                                                email={email}
-                                                onSubmit={handleSubmitContact}
-                                                className=""
-                                            >
-                                                <p className="text-sm text-zinc-400">
-                                                    Enter your email and we'll get in contact with you:
-                                                </p>
-                                                <div className="mt-3">
-                                                    <input
-                                                        value={email}
-                                                        onChange={({ target }) => { setEmail(target.value) }}
-                                                        className="block w-full px-2 rounded border-none h-10 bg-[#fff] text-slate-900 outline-0"
-                                                        placeholder="your@email.com"
-                                                    />
-                                                </div>
-                                                <div className="mt-8 text-right">
-                                                    <Form.Button className="rounded bg-indigo-500 px-5 py-2 text-[1rem] text-white ">
-                                                        Contact me
-                                                    </Form.Button>
-                                                </div>
-                                            </Form>
-                                        </motion.div>
-                                    ) : (
-                                        <motion.div
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            transition={{ ...transition, duration: 0.4, delay: 0.3 }}
-                                        >
-                                            <p className="p-8 text-sm text-zinc-400">
-                                                Email sent! One of our agents will get in touch with you, have a wonderful day.
-                                            </p>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        </motion.div>
+                                                    <motion.div
+                                                        key={1}
+                                                        exit={{ opacity: 0 }}
+                                                        transition={{ ...transition, duration: 0.3 }}
+                                                        className='p-8'>
+                                                        <Form
+                                                            email={email}
+                                                            onSubmit={handleSubmitRecaptcha}
+                                                            className=""
+                                                        >
+                                                            <p className="text-sm text-zinc-400">
+                                                                Enter your email and we'll get in contact with you:
+                                                            </p>
+                                                            <div className="mt-3">
+                                                                <input
+                                                                    value={email}
+                                                                    onChange={({ target }) => { setEmail(target.value) }}
+                                                                    className="block w-full px-2 rounded border-none h-10 bg-[#fff] text-slate-900 outline-0"
+                                                                    placeholder="your@email.com"
+                                                                />
+                                                            </div>
+                                                            <div className="mt-3 hidden">
+                                                                <input
+                                                                    value={honeyPot}
+                                                                    onChange={({ target }) => { setHoneyPot(target.value) }}
+                                                                    className="block w-full px-2 rounded border-none h-10 bg-[#fff] text-slate-900 outline-0"
+                                                                    placeholder="your@email.com"
+                                                                />
+                                                            </div>
+                                                            <div className="mt-8 text-right">
+                                                                <Form.Button className="rounded bg-indigo-500 px-5 py-2 text-[1rem] text-white ">
+                                                                    Contact me
+                                                                </Form.Button>
+                                                            </div>
+                                                        </Form>
+                                                    </motion.div>
+                                                ) : (
+                                                    <motion.div
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: 1 }}
+                                                        transition={{ ...transition, duration: 0.4, delay: 0.3 }}
+                                                    >
+                                                        <p className="p-8 text-sm text-zinc-400">
+                                                            Email sent! One of our agents will get in touch with you, have a wonderful day.
+                                                        </p>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
+                                    </motion.div>
+                                </>
+                            )
+                        }
                     </div>
 
                     <p className="mt-8 text-sm text-zinc-500">
@@ -471,7 +553,7 @@ function ContactForm({ parent }: { parent: any }) {
                 </div>
                 <div className='absolute top-0 left-0 w-full h-full z-10 bg-radial from-transparent  to-[#10100e]'></div>
                 <div className='absolute top-0 left-0 w-full h-full z-10 bg-radial from-transparent  to-[#10100e]'></div>
-                <canvas className='absolute top-0 left-0' width={parent.width} height={700} id='canvas'></canvas>
+                <canvas className='absolute top-0 left-0 h-full' width={parent.width} height={700} id='canvas'></canvas>
             </div>
         </MotionConfig>
     );
